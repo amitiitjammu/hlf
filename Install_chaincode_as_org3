@@ -1,0 +1,74 @@
+# After the chaincode has been to deployed on channel aflehal on Org1 and Org2; we can use the following steps to use invoke Basic chaincode as Org3. Copy and paste the following environment variables (For Org 3) in your terminal in order to interact with the network as the Org3 admin
+
+
+	cd fabric/fabric-samples/test-network
+
+# Open a new terminal 
+
+	export PATH=${PWD}/../bin:$PATH
+	export FABRIC_CFG_PATH=$PWD/../config/
+	export CORE_PEER_TLS_ENABLED=true
+	export CORE_PEER_LOCALMSPID="Org3MSP"
+	export CORE_PEER_TLS_ROOTCERT_FILE=${PWD}/organizations/peerOrganizations/org3.example.com/peers/peer0.org3.example.com/tls/ca.crt
+	export CORE_PEER_MSPCONFIGPATH=${PWD}/organizations/peerOrganizations/org3.example.com/users/Admin@org3.example.com/msp
+	export CORE_PEER_ADDRESS=localhost:11051
+ 
+
+# Issue the following command to install the chaincode package. This package has already been created/ packaged by Org1 & Org2 named basic.
+
+	peer lifecycle chaincode install basic.tar.gz
+
+# Next step is to approve the chaincode definition of Basic as Org3. Org3 needs to approve the same definition that Org1 and Org2 approved and committed to the channel. In order to invoke the chaincode, Org3 needs to include the package identifier in the chaincode definition. You can find the package identifier by querying your peer:
+
+	peer lifecycle chaincode queryinstalled
+
+# You should see output similar to the following:
+
+#Installed chaincodes on peer:
+#Package ID: basic_1.0:d29562b85321d821cc02fddff4366e54b9bdbfa5d51647b5613141dd4d947b9e, Label: basic_1.0
+
+
+
+# We are going to need the package ID in a future command, so lets go ahead and save it as an environment variable. Paste the package ID #returned by the 'peer lifecycle chaincode queryinstalled' command into the command below
+
+	export CC_PACKAGE_ID=basic_1.0:d29562b85321d821cc02fddff4366e54b9bdbfa5d51647b5613141dd4d947b9e
+
+
+# Use the following command to approve a definition of the basic chaincode for Org3:
+
+	peer lifecycle chaincode approveformyorg -o localhost:7050 --ordererTLSHostnameOverride orderer.example.com --tls --cafile "${PWD}/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem" --channelID aflehal --name basic --version 1.0 --package-id $CC_PACKAGE_ID --sequence 1
+	
+# Output will be something like this
+# 2023-02-26 11:22:38.383 IST 0001 INFO [chaincodeCmd] ClientWait -> txid [2222546aa764dd1ce0b0d6d7f70725fed21d4eb8642aed66916693f1674598fb] committed with status (VALID) at localhost:11051
+
+
+
+# use the peer lifecycle chaincode querycommitted command to check if the chaincode definition you have approved has already been #committed to the channel.
+
+	peer lifecycle chaincode querycommitted --channelID aflehal --name basic
+
+
+# A successful command will return information about the committed definition:
+# Committed chaincode definition for chaincode 'basic' on channel 'aflehal':
+# Version: 1.0, Sequence: 1, Endorsement Plugin: escc, Validation Plugin: vscc, Approvals: [Org1MSP: true, Org2MSP: true, Org3MSP: true]
+
+
+# Org3 can use the basic chaincode after it approves the chaincode definition that was committed to the channel. The chaincode definition # uses the default endorsement policy, which requires a majority of organizations on the channel endorse a transaction. This implies that # if an organization is added to or removed from the channel, the endorsement policy will be updated automatically. We previously needed # # endorsements from Org1 and Org2 (2 out of 2). Now we need endorsements from two organizations out of Org1, Org2, and Org3 (2 out of 3).
+
+
+
+
+# Populate the ledger with some sample assets. We’ll get endorsements from the Org2 peer and the new Org3 peer so that the endorsement policy is satisfied.
+
+	peer chaincode invoke -o localhost:7050 --ordererTLSHostnameOverride orderer.example.com --tls --cafile "${PWD}/organizations/ordererOrganizations/example.com/orderers/orderer.example.com/msp/tlscacerts/tlsca.example.com-cert.pem" -C aflehal -n basic --peerAddresses localhost:9051 --tlsRootCertFiles "${PWD}/organizations/peerOrganizations/org2.example.com/peers/peer0.org2.example.com/tls/ca.crt" --peerAddresses localhost:11051 --tlsRootCertFiles "${PWD}/organizations/peerOrganizations/org3.example.com/peers/peer0.org3.example.com/tls/ca.crt" -c '{"function":"InitLedger","Args":[]}'
+
+
+# You can query the chaincode to ensure that the Org3 peer committed the data.
+
+	peer chaincode query -C aflehal -n basic -c '{"Args":["GetAllAssets"]}'
+
+
+
+
+
+

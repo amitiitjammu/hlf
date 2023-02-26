@@ -1,0 +1,22 @@
+# Open a terminal & navigate to test-network directory
+
+	cd fabric/fabric-samples/test-network
+	
+# Run the network.sh up script with createChannel command
+
+	./network.sh up createChannel -ca -c aflehal
+	
+# Navigate to addOrg3 directory
+
+	cd addOrg3
+	
+# Run the script addOrg3.sh
+
+	./addOrg3.sh up -ca -c aflehal
+	
+# Check if the network is properly built with all required containers
+
+	docker ps -a
+
+
+# Run the script Install_chaincode_on_org3

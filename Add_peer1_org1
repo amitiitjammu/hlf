@@ -1,0 +1,16 @@
+# This script must be run in a new terminal defined for Org1 only.
+
+
+# Create certificates for Peer1 Org 1
+
+	./organizations/fabric-ca/registerPeer1Org1.sh
+	
+# Now run Docker Compose file
+	
+	docker-compose -f docker/docker-compose-peer1org1.yaml up -d
+	
+# Now make the new peer join the channel "afle"
+
+	CORE_PEER_ADDRESS=localhost:8051 peer channel join -b channel-artifacts/aflehal.block
+	
+	
